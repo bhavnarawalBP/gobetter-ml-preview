@@ -369,10 +369,10 @@ a{text-decoration:none;color:inherit;}
 .nav-card-item__name{font-size:13px;color:var(--t2);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .nav-card-item.active .nav-card-item__name{color:var(--t1);font-weight:500;}
 /* Completion indicator — icon */
-.cdot{flex-shrink:0;width:18px;height:18px;display:flex;align-items:center;justify-content:center;}
+.cdot{flex-shrink:0;width:16px;height:16px;display:flex;align-items:center;justify-content:center;}
 .cdot--done{color:var(--bp-success);}
 .cdot--warn{color:var(--bp-error);}
-.cdot--none{color:var(--t4);}
+.cdot--none{width:0;overflow:hidden;}
 
 /* Assessment panel */
 .assess-panel{flex-shrink:0;border-top:1px solid var(--border);background:var(--bg-subtle);padding:12px 16px;display:flex;flex-direction:column;gap:6px;}
@@ -1195,7 +1195,7 @@ function buildNav(c) {
   const svgDot = (cls) => cls === 'cdot--done'
     ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
     : cls === 'cdot--warn'
-    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/></svg>`
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 7v6" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1.1" fill="#fff"/></svg>`
     : ``;
   let html = `<button class="nav-course-item${ES.activeCard === 'title' ? ' active' : ''}" onclick="selectCard('title')">
     <div class="nav-course-item__texts">
@@ -1245,7 +1245,7 @@ function buildNav(c) {
           const dotIc = d.cls === 'cdot--done'
             ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
             : d.cls === 'cdot--warn'
-            ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/></svg>`
+            ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 7v6" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1.1" fill="#fff"/></svg>`
             : ``;
           return `<button class="nav-card-item${ES.activeCard === card.id ? ' active' : ''}"
             draggable="true"
@@ -1404,10 +1404,10 @@ function chDrop(e, targetChId) {
 function getDot(cardId, c, td) {
   const card = c.cards.find(x => x.id === cardId);
   const t = td[cardId];
-  if (!card || !t) return { cls: 'cdot--none', ic: '○' };
-  if (isComplete(card, t)) return { cls: 'cdot--done', ic: '✓' };
+  if (!card || !t) return { cls: 'cdot--none' };
+  if (isComplete(card, t)) return { cls: 'cdot--done' };
   const any = t.title || t.body || t.desc || t.image || t.video || t.question || (t.answers && t.answers.some(a => a));
-  return any ? { cls: 'cdot--warn', ic: '⚠' } : { cls: 'cdot--none', ic: '○' };
+  return any ? { cls: 'cdot--warn' } : { cls: 'cdot--none' };
 }
 
 function isComplete(card, t) {
@@ -1637,7 +1637,7 @@ function updateDot(cardId, c) {
   const dotSvg = dot.cls === 'cdot--done'
     ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
     : dot.cls === 'cdot--warn'
-    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/></svg>`
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 7v6" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1.1" fill="#fff"/></svg>`
     : ``;
   document.querySelectorAll('.nav-card-item,.nav-course-item').forEach(btn => {
     if (btn.getAttribute('onclick')?.includes(`'${cardId}'`)) {
