@@ -352,10 +352,16 @@ a{text-decoration:none;color:inherit;}
 .nav-card-item:hover{background:var(--bg-subtle);}
 .nav-card-item.active{background:var(--bp-primary-light);border-left-color:var(--bp-primary);}
 /* Drag handle dots — always visible at rest, slightly muted */
-.nav-card-item__drag{display:flex;flex-direction:column;gap:2px;flex-shrink:0;opacity:.35;transition:opacity .12s;}
+.nav-card-item__drag{display:flex;flex-direction:column;gap:2px;flex-shrink:0;opacity:.35;transition:opacity .12s;cursor:grab;}
 .nav-card-item:hover .nav-card-item__drag{opacity:.65;}
 .nav-card-item__drag-row{display:flex;gap:2px;}
 .nav-card-item__drag-dot{width:3px;height:3px;border-radius:50%;background:var(--t3);}
+/* Drag-and-drop states */
+.nav-card-item.dnd-dragging{opacity:.4;background:var(--bg-subtle);}
+.nav-card-item.dnd-over{border-top:2px solid var(--bp-primary);}
+.ch-collapse.dnd-dragging{opacity:.4;}
+.ch-collapse.dnd-over-ch{outline:2px solid var(--bp-primary);outline-offset:-2px;border-radius:4px;}
+.ch-header__drag{cursor:grab;}
 /* Card type icon — small SVG icon, no color badge */
 .nav-card-item__icon{width:16px;height:16px;flex-shrink:0;color:var(--t3);display:flex;align-items:center;justify-content:center;}
 .nav-card-item__icon svg{display:block;}
@@ -1210,7 +1216,12 @@ function buildNav(c) {
     const chid = `ch${n}`;
     const chevSvg = `<svg viewBox="0 0 12 8"><polyline points="1,1 6,7 11,1"/></svg>`;
     const chDrag = `<span class="ch-header__drag"><span class="ch-header__drag-row"><span class="ch-header__drag-dot"></span><span class="ch-header__drag-dot"></span></span><span class="ch-header__drag-row"><span class="ch-header__drag-dot"></span><span class="ch-header__drag-dot"></span></span><span class="ch-header__drag-row"><span class="ch-header__drag-dot"></span><span class="ch-header__drag-dot"></span></span></span>`;
-    html += `<div class="ch-collapse" id="${chid}">
+    html += `<div class="ch-collapse" id="${chid}" draggable="true" data-chnum="${n}"
+      ondragstart="chDragStart(event,'${chid}')"
+      ondragover="chDragOver(event,'${chid}')"
+      ondragleave="chDragLeave(event,'${chid}')"
+      ondrop="chDrop(event,'${chid}')"
+      ondragend="document.querySelectorAll('.dnd-dragging,.dnd-over,.dnd-over-ch').forEach(el=>el.classList.remove('dnd-dragging','dnd-over','dnd-over-ch'))">
       <button class="ch-header" onclick="toggleCh('${chid}')">
         ${chDrag}
         <div class="ch-header__left">
@@ -1230,13 +1241,22 @@ function buildNav(c) {
             video: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="currentColor"/></svg>`,
             question: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" fill="currentColor"/></svg>`,
           };
-          const dragDots = `<span class="nav-card-item__drag"><span class="nav-card-item__drag-row"><span class="nav-card-item__drag-dot"></span><span class="nav-card-item__drag-dot"></span></span><span class="nav-card-item__drag-row"><span class="nav-card-item__drag-dot"></span><span class="nav-card-item__drag-dot"></span></span><span class="nav-card-item__drag-row"><span class="nav-card-item__drag-dot"></span><span class="nav-card-item__drag-dot"></span></span></span>`;
+          const dragDots = `<span class="nav-card-item__drag" onmousedown="event.stopPropagation()"><span class="nav-card-item__drag-row"><span class="nav-card-item__drag-dot"></span><span class="nav-card-item__drag-dot"></span></span><span class="nav-card-item__drag-row"><span class="nav-card-item__drag-dot"></span><span class="nav-card-item__drag-dot"></span></span><span class="nav-card-item__drag-row"><span class="nav-card-item__drag-dot"></span><span class="nav-card-item__drag-dot"></span></span></span>`;
           const dotIc = d.cls === 'cdot--done'
             ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14l-4-4 1.41-1.41L10 13.17l6.59-6.59L18 8l-8 8z" fill="currentColor"/></svg>`
             : d.cls === 'cdot--warn'
             ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/></svg>`
             : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>`;
-          return `<button class="nav-card-item${ES.activeCard === card.id ? ' active' : ''}" onclick="selectCard('${card.id}')">
+          return `<button class="nav-card-item${ES.activeCard === card.id ? ' active' : ''}"
+            draggable="true"
+            data-cardid="${card.id}"
+            data-chnum="${n}"
+            onclick="selectCard('${card.id}')"
+            ondragstart="cardDragStart(event,'${card.id}','${n}')"
+            ondragover="cardDragOver(event,'${card.id}','${n}')"
+            ondragleave="cardDragLeave(event)"
+            ondrop="cardDrop(event,'${card.id}','${n}')"
+            ondragend="document.querySelectorAll('.dnd-dragging,.dnd-over').forEach(el=>el.classList.remove('dnd-dragging','dnd-over'))">
             ${dragDots}
             <span class="nav-card-item__icon">${typeIcons[card.type]||''}</span>
             <span class="nav-card-item__name">${typeLabel}</span>
@@ -1247,6 +1267,138 @@ function buildNav(c) {
     </div>`;
   });
   nav.innerHTML = html;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   DRAG AND DROP — Cards (within same chapter) + Chapters (reorder)
+════════════════════════════════════════════════════════════════════════ */
+let _dnd = { type: null, cardId: null, chNum: null, chId: null };
+
+// ── Card drag ──────────────────────────────────────────────────────────
+function cardDragStart(e, cardId, chNum) {
+  e.stopPropagation(); // prevent chapter drag from firing
+  _dnd = { type: 'card', cardId, chNum };
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', cardId);
+  setTimeout(() => e.target.classList.add('dnd-dragging'), 0);
+}
+
+function cardDragOver(e, targetCardId, targetChNum) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (_dnd.type !== 'card' || _dnd.chNum !== targetChNum) return; // cross-chapter not allowed
+  if (_dnd.cardId === targetCardId) return;
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.nav-card-item.dnd-over').forEach(el => el.classList.remove('dnd-over'));
+  e.currentTarget.classList.add('dnd-over');
+}
+
+function cardDragLeave(e) {
+  e.currentTarget.classList.remove('dnd-over');
+}
+
+function cardDrop(e, targetCardId, targetChNum) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.querySelectorAll('.nav-card-item.dnd-dragging,.nav-card-item.dnd-over').forEach(el => {
+    el.classList.remove('dnd-dragging', 'dnd-over');
+  });
+  if (_dnd.type !== 'card' || _dnd.chNum !== targetChNum) return;
+  if (_dnd.cardId === targetCardId) return;
+
+  const c = COURSES.find(x => x.id === ES.courseId);
+  if (!c) return;
+
+  const chN = parseInt(targetChNum);
+  // Reorder within COURSES[].cards for this chapter
+  const chCards = c.cards.filter(x => x.ch === chN);
+  const otherCards = c.cards.filter(x => x.ch !== chN);
+  const fromIdx = chCards.findIndex(x => x.id === _dnd.cardId);
+  const toIdx   = chCards.findIndex(x => x.id === targetCardId);
+  if (fromIdx === -1 || toIdx === -1) return;
+
+  const [moved] = chCards.splice(fromIdx, 1);
+  chCards.splice(toIdx, 0, moved);
+
+  // Rebuild c.cards preserving non-chapter cards order
+  const titleCard = otherCards.filter(x => !x.ch);
+  const otherChCards = otherCards.filter(x => x.ch && x.ch !== chN);
+  c.cards = [...titleCard, ...otherChCards, ...chCards].sort((a, b) => {
+    // sort: title card first, then by ch number, then by new order within ch
+    if (!a.ch && b.ch) return -1;
+    if (a.ch && !b.ch) return 1;
+    if (a.ch !== b.ch) return a.ch - b.ch;
+    return 0;
+  });
+  // Actually rebuild properly: preserve all chapters order, only reorder within target chapter
+  const allChNums = [...new Set(c.cards.filter(x=>x.ch).map(x=>x.ch))];
+  const rebuilt = [...c.cards.filter(x=>!x.ch)];
+  allChNums.forEach(n => {
+    if (n === chN) rebuilt.push(...chCards);
+    else rebuilt.push(...c.cards.filter(x => x.ch === n));
+  });
+  c.cards = rebuilt;
+
+  buildNav(c);
+  _dnd = { type: null };
+}
+
+// ── Chapter drag ───────────────────────────────────────────────────────
+function chDragStart(e, chid) {
+  if (e.target.closest('.nav-card-item')) { e.stopPropagation(); return; }
+  _dnd = { type: 'chapter', chId: chid, chNum: e.currentTarget.dataset.chnum };
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', chid);
+  setTimeout(() => e.currentTarget.classList.add('dnd-dragging'), 0);
+}
+
+function chDragOver(e, chid) {
+  if (_dnd.type !== 'chapter') return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.ch-collapse.dnd-over-ch').forEach(el => el.classList.remove('dnd-over-ch'));
+  if (_dnd.chId !== chid) e.currentTarget.classList.add('dnd-over-ch');
+}
+
+function chDragLeave(e, chid) {
+  e.currentTarget.classList.remove('dnd-over-ch');
+}
+
+function chDrop(e, targetChId) {
+  e.preventDefault();
+  document.querySelectorAll('.ch-collapse.dnd-dragging,.ch-collapse.dnd-over-ch').forEach(el => {
+    el.classList.remove('dnd-dragging', 'dnd-over-ch');
+  });
+  if (_dnd.type !== 'chapter' || _dnd.chId === targetChId) return;
+
+  const c = COURSES.find(x => x.id === ES.courseId);
+  if (!c) return;
+
+  const fromChN = parseInt(_dnd.chNum);
+  const toChN   = parseInt(document.getElementById(targetChId)?.dataset.chnum);
+  if (!fromChN || !toChN || fromChN === toChN) return;
+
+  // Get all unique chapter numbers in current DOM order
+  const nav = document.getElementById('s03-nav');
+  const chEls = [...nav.querySelectorAll('.ch-collapse')];
+  const domOrder = chEls.map(el => parseInt(el.dataset.chnum));
+
+  const fromDomIdx = domOrder.indexOf(fromChN);
+  const toDomIdx   = domOrder.indexOf(toChN);
+  const newOrder = [...domOrder];
+  const [moved] = newOrder.splice(fromDomIdx, 1);
+  newOrder.splice(toDomIdx, 0, moved);
+
+  // Rebuild c.cards in new chapter order
+  const titleCards = c.cards.filter(x => !x.ch);
+  const rebuilt = [...titleCards];
+  newOrder.forEach(n => {
+    rebuilt.push(...c.cards.filter(x => x.ch === n));
+  });
+  c.cards = rebuilt;
+
+  buildNav(c);
+  _dnd = { type: null };
 }
 
 function getDot(cardId, c, td) {
