@@ -1193,10 +1193,10 @@ function buildNav(c) {
   const td = ES.data[c.id]?.[ES.langCode] || {};
   const titleDot = getDot('title', c, td);
   const svgDot = (cls) => cls === 'cdot--done'
-    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14l-4-4 1.41-1.41L10 13.17l6.59-6.59L18 8l-8 8z" fill="currentColor"/></svg>`
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
     : cls === 'cdot--warn'
     ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/></svg>`
-    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>`;
+    : ``;
   let html = `<button class="nav-course-item${ES.activeCard === 'title' ? ' active' : ''}" onclick="selectCard('title')">
     <div class="nav-course-item__texts">
       <div class="nav-course-item__name">Course Title &amp; Description</div>
@@ -1243,10 +1243,10 @@ function buildNav(c) {
           };
           const dragDots = `<span class="nav-card-item__drag" onmousedown="event.stopPropagation()"><span class="nav-card-item__drag-row"><span class="nav-card-item__drag-dot"></span><span class="nav-card-item__drag-dot"></span></span><span class="nav-card-item__drag-row"><span class="nav-card-item__drag-dot"></span><span class="nav-card-item__drag-dot"></span></span><span class="nav-card-item__drag-row"><span class="nav-card-item__drag-dot"></span><span class="nav-card-item__drag-dot"></span></span></span>`;
           const dotIc = d.cls === 'cdot--done'
-            ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14l-4-4 1.41-1.41L10 13.17l6.59-6.59L18 8l-8 8z" fill="currentColor"/></svg>`
+            ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
             : d.cls === 'cdot--warn'
             ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/></svg>`
-            : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>`;
+            : ``;
           return `<button class="nav-card-item${ES.activeCard === card.id ? ' active' : ''}"
             draggable="true"
             data-cardid="${card.id}"
@@ -1634,10 +1634,15 @@ function wireListeners(card, cardId, c) {
 function updateDot(cardId, c) {
   const td = ES.data[c.id]?.[ES.langCode] || {};
   const dot = getDot(cardId, c, td);
+  const dotSvg = dot.cls === 'cdot--done'
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.5 3.5 6.5-7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+    : dot.cls === 'cdot--warn'
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/></svg>`
+    : ``;
   document.querySelectorAll('.nav-card-item,.nav-course-item').forEach(btn => {
     if (btn.getAttribute('onclick')?.includes(`'${cardId}'`)) {
       const el = btn.querySelector('.cdot');
-      if (el) { el.className = `cdot ${dot.cls}`; el.textContent = dot.ic; }
+      if (el) { el.className = `cdot ${dot.cls}`; el.innerHTML = dotSvg; }
     }
   });
 }
